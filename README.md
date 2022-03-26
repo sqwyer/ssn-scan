@@ -1,5 +1,5 @@
 # ssn-scan
-A CLI app that scans for possible United States SSN numbers in a directory.
+An app that scans for possible United States SSN numbers in a directory.
 
 ### Installation
 - Ensure that you have the latest git, rust, and cargo versions installed before attempting to install and build.

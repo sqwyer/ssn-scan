@@ -10,3 +10,5 @@ quicli = "0.4.0"
 structopt = { version = "0.3", default-features = false }
 walkdir = "2"
 regex = "1"
+web-view = "0.7.3"
+tinyfiledialogs = "3.9.0"
