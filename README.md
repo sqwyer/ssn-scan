@@ -10,5 +10,8 @@ cargo build --release
 cargo install --path .
 ```
 
+### Purpose
+This project is not to be used for malicious intent, it is meerly to ensure that you are able to remove all possible SSNs before sending files to clients.
+
 -----
 **This project is not licensed.**
