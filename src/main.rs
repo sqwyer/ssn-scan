@@ -14,37 +14,33 @@ struct Cli {
 fn main() -> CliResult  {
     let args = Cli::from_args();
     let mut total_files: u128 = 0;
-    let mut total_possible: u128 = 0;
+    let mut total_possible: usize = 0;
     println!("---------------------------------------------------------");
     for file in WalkDir::new(&args.dir).into_iter().filter_map(|file| file.ok()) {
         let path = &file.path();
         if metadata(path).unwrap().is_file() {
-            let buf = lib::read_file(&path);
-            let s = match std::str::from_utf8(&buf) {
-                Ok(v) => v,
-                Err(_) => continue,
-            };
-            let mut line_num: u128 = 0;
-            let mut total_cap: u128 = 0;
-            println!("------ Start File {:?} ----->>>", path.as_os_str());
-            total_files+=1;
-            for line in s.lines() {
-                line_num += 1;
-                let line_res = lib::scan_text(line);
-                let matches = line_res.get(&1);
-                if matches.is_none() {
-                    continue;
-                }
-                if line_res.get(&1).unwrap().count > 0 {
-                    println!("File {:?} has {:?} possible SSN(s) on line {}", path.as_os_str(), line_res.get(&1).unwrap().count, line_num);
-                }
-                total_cap += line_res.get(&1).unwrap().count;
-
+            let result = lib::scan_file(&path);
+            if result.is_none() {
+                continue;
             }
-            if total_cap == 0 {
-                println!("This file has no possible SSNs");
+            match result {
+                Some(lines) => {
+                    println!("------ Start File {:?} ----->>>", path.as_os_str());
+                    let mut l_possible: usize = 0;
+                    let mut line_num = 0;
+                    for line in lines.iter() {
+                        line_num+=1;
+                        l_possible+=line.1.numbers.len();
+                        println!("File {:?} has {:?} possible SSN(s) on line {}", path.as_os_str(),line.0,line_num);
+                    }
+                    total_possible += l_possible;
+                    total_files += 1;
+                    if l_possible > 0 {
+                        println!("File {:?} has no possible SSNs", path.as_os_str());
+                    }
+                },
+                None => continue,
             }
-            total_possible += total_cap;
         }
     }
     println!("---------------------------------------------------------\nFound possible {} SSN(s) accross {} file(s).", total_possible, total_files);

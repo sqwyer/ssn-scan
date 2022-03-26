@@ -1,7 +1,5 @@
 use std::{path::{Path}, fs::File, io::Read, collections::HashMap};
-
 use regex::Regex;
-
 
 pub const MATCH: &str = r"(\d{9}+)|(\d{3}-\d{2}-\d{4}+)";
 
@@ -9,11 +7,6 @@ pub struct LineResult {
     pub numbers: Vec<String>,
     pub count: u128
 }
-
-// pub struct FileResult<'a> {
-//     path: &'a Path,
-//     lines: &'a Vec<&'a LineResult<'a>>
-// }
 
 pub fn read_file(path: &Path) -> Vec<u8> {
     let mut file_content = Vec::new();
@@ -40,4 +33,13 @@ pub fn scan_text(text: &str) -> HashMap::<u128,LineResult> {
         all_lines.insert(line_num, line_res);
     }
     all_lines
+}
+
+pub fn scan_file(path: &Path) -> Option<HashMap::<u128,LineResult>> {
+    let buf = read_file(&path);
+    let s = match std::str::from_utf8(&buf) {
+        Ok(v) => v,
+        Err(_) => return None,
+    };
+    Some(scan_text(s))
 }
