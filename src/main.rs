@@ -1,8 +1,9 @@
+mod lib;
+
 extern crate walkdir;
 use quicli::prelude::CliResult;
-use regex::Regex;
 use walkdir::WalkDir;
-use std::{fs::{metadata, File}, path::Path, io::Read};
+use std::{fs::{metadata}};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -10,56 +11,34 @@ struct Cli {
     dir: String,
 }
 
-// struct LineResult {
-//     // numbers: Vec<i32>,
-//     numbers_int: i128
-// }
-
-fn read_file(path: &Path) -> Vec<u8> {
-    let mut file_content = Vec::new();
-    let mut file = File::open(&path).expect("Unable to open file");
-    file.read_to_end(&mut file_content).expect("Unable to read");
-    file_content
-}
-
 fn main() -> CliResult  {
     let args = Cli::from_args();
-    let reg = Regex::new(r"\d{9}+").unwrap();
-    let reg2 = Regex::new(r"\d{3}-\d{2}-\d{4}+").unwrap();
-    let mut total_files: i128 = 0;
-    let mut total_possible: i128 = 0;
+    let mut total_files: u128 = 0;
+    let mut total_possible: u128 = 0;
     println!("---------------------------------------------------------");
     for file in WalkDir::new(&args.dir).into_iter().filter_map(|file| file.ok()) {
         let path = &file.path();
         if metadata(path).unwrap().is_file() {
-            let buf = read_file(&path);
+            let buf = lib::read_file(&path);
             let s = match std::str::from_utf8(&buf) {
                 Ok(v) => v,
                 Err(_) => continue,
             };
-            let mut line_num: i128 = 0;
-            let mut total_cap: i128 = 0;
+            let mut line_num: u128 = 0;
+            let mut total_cap: u128 = 0;
             println!("------ Start File {:?} ----->>>", path.as_os_str());
             total_files+=1;
             for line in s.lines() {
-                let mut line_possible: i128 = 0;
-                line_num+=1;
-                // let mut captures = vec![];
-                for _ in reg.captures_iter(line) {
-                    // captures.push(cap.get(0).map_or("", |m| m.as_str()).parse::<i32>().unwrap());
-                    line_possible+=1;
+                line_num += 1;
+                let line_res = lib::scan_text(line);
+                let matches = line_res.get(&1);
+                if matches.is_none() {
+                    continue;
                 }
-                for _ in reg2.captures_iter(line) {
-                    // captures.push(cap.get(0).map_or("", |m| m.as_str()).parse::<i32>().unwrap());
-                    line_possible+=1;
+                if line_res.get(&1).unwrap().count > 0 {
+                    println!("File {:?} has {:?} possible SSN(s) on line {}", path.as_os_str(), line_res.get(&1).unwrap().count, line_num);
                 }
-                // let line_result = LineResult {
-                //     numbers_int: line_possible
-                // };
-                if line_possible > 0 {
-                    println!("File {:?} has {:?} possible SSN(s) on line {}", path.as_os_str(), line_possible, line_num);
-                }
-                total_cap += line_possible;
+                total_cap += line_res.get(&1).unwrap().count;
 
             }
             if total_cap == 0 {
